@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no"/>
+	<style type="text/css">
+		.musicbox{
+			position: absolute;
+			overflow: hidden;
+			top:0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+			background-color: rgb(193, 230, 198);
+		}
+		.word{
+			margin: 0 auto;
+			text-align: center;
+			width: 300px;
+			height:350px;
+			overflow-y:hidden;
+		}
+		.lrchi{
+			color: white;
+		}
+		.cont{
+			transition: all 800ms ease;
+		}
+		.img-div{
+			margin: 0 auto;
+			text-align: center;
+
+		}
+		.myimg{
+			border-radius: 100%;
+			height: 300px;
+			width : 300px;
+			z-index: 1;
+		}
+		.myaudio{
+			width: 100%;
+		}
+		.audio-div{
+			position: fixed;
+    	z-index: 100;
+    	bottom: 0px;
+    	width: 100%;
+}
+		}
+	</style>
+</head>
+<body>
+<script src="js/vue.js"></script>
+<script src="https://unpkg.com/vue"></script>
+<div class="musicbox">
+<div id="img-div" class="img-div">
+	<img v-bind:src="imgsrc" class="myimg" id="myimg"> 
+</div>
+<div id="word" class="word">
+	<div id="cont" class="cont" :style="{marginTop:scroll+'px'}">
+		<div v-html="lrc.text" v-for="(lrc,index) in prd" v-bind:id="'lyc-'+ index" :class="{lrchi: index===vindex }">
+			{{ lrc.text }}<br>
+		</div>
+	</div>
+</div>
+<div id="audio-div" class="audio-div">
+	<audio id="myaudio" class="myaudio" v-bind:src="audiosrc" controls="controls" v-on:play="playaudio" v-on:pause="pauseaudio">
+		
+	</audio>
+</div>
+</div>
+</body>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script type="text/javascript">
+	axios.post('http://cg.baicizhan.com/topics/get_data',{
+		'id':'1091'
+	})
+	.then(function(response){
+		var head = 'http://cg.baicizhan.com/resource/'
+		var audurl = head + JSON.parse(response.data.content).info.audio.src
+   		var imgurl = head + JSON.parse(response.data.content).info.image.src
+   		var prd = JSON.parse(response.data.content).lyrics;
+
+  		(function(){
+   			for(var i=0 ; i<prd.length;i++)
+   			{
+   					prd[i]['text'] = prd[i]['text'].replace(/<span[^>]*>|<\/span>/g," ");
+   			}
+   		})();
+		
+		new Vue({
+   			el:".musicbox",
+   			data:{
+   				vindex:0,
+   				prd:prd ,
+   				imgsrc:imgurl,
+   				audiosrc:audurl,
+   				scroll:100,
+   				play:0,
+   				currenttime:0
+   			},
+   			mounted: function () {
+            	this.vmakedata();
+       		 },
+/*       		computed:{
+       			classobj:function(){
+       				return 
+       			}
+       		 },*/
+   			methods:{
+   				vmakedata:function(){
+   					var vm=this;
+
+   					setTimeout(function () {
+                    vm.makedata();
+                }, 100)
+   				},
+   				playaudio:function(){
+   					this.vindex--;
+   					this.go();
+   				},
+   				pauseaudio:function(){
+   					
+   					clearTimeout(this.play);
+   				},
+   				makedata:function (){
+   						var content=document.getElementById("cont");
+						prd[0].scrolltop=0;
+						prd[0].time=prd[0].end*1000;
+						
+						/*console.log("ido");*/
+						console.log(prd.length);
+   						for(i=1;i<prd.length-1;i++)
+   						{	
+   							
+   							prd[i].time=(prd[i].end-prd[i-1].end)*1000;
+   							prd[i].scrolltop=prd[i-1].scrolltop+content.children[i-1].scrollHeight+16;
+   						}	
+				},
+				go: function(){
+						this.vindex++;
+						var audio = document.getElementById("myaudio");
+						this.currenttime=audio.currentTime;
+						if(this.currenttime<prd[this.vindex].start)
+						{
+							this.vindex=this.binarySearch(prd,this.currenttime);
+						}
+						this.scroll=-prd[this.vindex].scrolltop;
+						var needtime=prd[this.vindex].end-this.currenttime
+						this.play=setTimeout(this.go.bind(this),needtime*1000);
+				},
+				binarySearch:function(data,dest){
+					var r = data.length-1,l=0;
+					while(l<=r){
+						var m=Math.floor((l+r)/2);
+						if(data[m].end==dest){
+							return m;
+						}
+						if(dest > data[m].end){
+							l=m+1;
+						}else{
+							r=m-1;
+						}
+					}
+					return l;
+				}
+   			}
+   		})	
+
+
+
+	})
+	.catch(function(error){
+		console.log(error);
+	});
+</script>
+</html>
