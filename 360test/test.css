@@ -1,0 +1,24 @@
+.phone{
+	width: 320px;
+	height: 570px;
+	margin-left: auto;
+	margin-right: auto;
+}
+.title{
+	width: 320px;
+	height: 60px;
+	background-color: rgba(241, 241, 243, 1);
+	text-align: center;
+	line-height: 80px;
+	border-bottom: 2px solid gray;
+}
+.bo{
+	width: 320px;
+	height: 510px;
+	background-color: rgb(235, 235, 235);
+}
+.div1{
+	width: 320px;
+	height: 100px;
+	text-align: center;
+}
